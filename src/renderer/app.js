@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import Button from '@material-ui/core/Button';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Grid from '@material-ui/core/Grid';
+import Switch from '@material-ui/core/Switch';
 import Typography from '@material-ui/core/Typography';
+
 import { v1 as uuidv1 } from 'uuid';
 import Store from 'electron-store';
 
@@ -37,14 +40,41 @@ const startRecordingTask = (task) => {
 
 const store = new Store();
 
+const TaskList = ({ tasks, createNewTask, deleteTask, startRecording, stopRecording }) => {
+    const [isNewTaskOpen, setNewTaskOpen] = useState(false);
+    const [isManaging, setManaging] = useState(false);
+
+    return (
+        <div>
+            <Grid container direction="column" wrap="nowrap" spacing={1}>
+                {
+                    tasks.order.map(id => tasks.byId[id]).map(task => (
+                        <Grid item key={task.id}>
+                            <Task {...{ task, startRecording, stopRecording, isManaging, deleteTask }}/>
+                        </Grid>
+                    ))
+                }
+                <Grid item>
+                    <Grid container direction="row" wrap="nowrap" justify="space-between">
+                        <Grid item>
+                            <FormControlLabel label="Manage Tasks" control={<Switch checked={isManaging} onChange={() => setManaging(!isManaging)}/>}/>
+                        </Grid>
+                        <Grid item>
+                            <Button disabled={isManaging} variant="contained" color="primary" onClick={() => setNewTaskOpen(true)}>New Task</Button>
+                        </Grid>
+                    </Grid>
+                </Grid>
+            </Grid>
+            <NewTaskDialog isOpen={isNewTaskOpen} onClose={() => setNewTaskOpen(false)} createNewTask={createNewTask}/>
+        </div>
+    )
+}
+
 const TasksContainer = () => {
     const [tasks, setTasks] = useState({
         byId: {},
         order: []
     });
-
-    const [isNewTaskOpen, setNewTaskOpen] = useState(false);
-
     useEffect(() => {
         if(!Object.keys(tasks.byId).length) {
             const storedTasks = store.get('tasks');
@@ -92,30 +122,22 @@ const TasksContainer = () => {
         updateTask(id, stopRecordingTask(tasks.byId[id]))
     }
 
-    return (
-        <div>
-            <Grid container direction="column" wrap="nowrap" spacing={1}>
-                <Grid item>
-                    <Typography variant="h5">Current Tasks</Typography>
-                </Grid>
-                {
-                    tasks.order.map(id => tasks.byId[id]).map(task => (
-                        <Grid item key={task.id}>
-                            <Task {...{ task, startRecording, stopRecording }}/>
-                        </Grid>
-                    ))
-                }
-                <Grid item style={{ alignSelf: 'flex-end' }}>
-                    <Button variant="contained" color="primary" onClick={() => setNewTaskOpen(true)}>New Task</Button>
-                </Grid>
-            </Grid>
-            <NewTaskDialog isOpen={isNewTaskOpen} onClose={() => setNewTaskOpen(false)} createNewTask={createNewTask}/>
-        </div>
-    )
+    const deleteTask = (id) => {
+        const { [id]: _, ...byId} = tasks.byId;
+        const order = tasks.order.filter(i => i !== id);
+        setTasks({
+            ...tasks,
+            byId,
+            order
+        })
+    }
+
+    return <TaskList {...{ tasks, createNewTask, deleteTask, startRecording, stopRecording }}/>
 }
 
 export const App = () => (
     <div>
+        <Typography variant="h3">TimeKeeper</Typography>
         <TasksContainer/>
     </div>
 );

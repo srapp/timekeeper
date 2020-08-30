@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Card from '@material-ui/core/Card';
 import CardContent from '@material-ui/core/CardContent';
+import DeleteForeverIcon from '@material-ui/icons/DeleteForever';
 import Grid from '@material-ui/core/Grid';
 import IconButton from '@material-ui/core/IconButton';
 import PauseIcon from '@material-ui/icons/Pause';
@@ -8,6 +9,7 @@ import PlayArrowIcon from '@material-ui/icons/PlayArrow';
 import Typography from '@material-ui/core/Typography';
 import { format, formatDistanceStrict } from 'date-fns';
 
+const iconStyles = { fontSize: 36 };
 const formatTime = (timestamp) => format(timestamp, 'h:mmaaaaa');
 const calculateTotalTime = (recordings) => {
     const totalDuration = recordings.map(({start, end}) => (end || Date.now()) - start)
@@ -25,14 +27,17 @@ const RecordingsList = ({ recordings }) => {
 }
 
 const RecordingButton = ({ task: { id, isRecording }, startRecording, stopRecording }) => {
-    const style = { fontSize: 36 };
-    const icon = isRecording ? <PauseIcon {...{ style }} color="secondary"/> : <PlayArrowIcon {...{ style }}/>;
+    const icon = isRecording ? <PauseIcon style={iconStyles} color="secondary"/> : <PlayArrowIcon style={iconStyles}/>;
     const onClick = isRecording ? () => stopRecording(id) : () => startRecording(id)
 
     return <IconButton {...{ onClick }}>{icon}</IconButton>
 }
 
-export const Task = ({ task, task: { name, isRecording, recordings, createdAt }, startRecording, stopRecording }) => {
+const DeleteButton = ({ task: { id }, deleteTask }) => {
+    return <IconButton color="secondary" onClick={() => deleteTask(id)}><DeleteForeverIcon style={iconStyles}/></IconButton>
+}
+
+export const Task = ({ task, task: { name, isRecording, recordings }, startRecording, stopRecording, isManaging, deleteTask }) => {
     const [lastUpdated, setLastUpdated] = useState(Date.now());
 
     useEffect(() => {
@@ -46,15 +51,22 @@ export const Task = ({ task, task: { name, isRecording, recordings, createdAt },
     return (
         <Card variant="outlined" style={{ width: '100%' }}>
             <CardContent>
-                <Grid container justify="space-between" alignItems="flex-start" wrap="nowrap" spacing={2}>
-                    <Grid item>
+                <Grid container justify="space-between" alignItems="center" wrap="nowrap" spacing={2}>
+                    {isManaging && (
+                        <Grid item>
+                            <DeleteButton {...{ task, deleteTask }}/>
+                        </Grid>
+                    )}
+                    <Grid item style={{ width: '100%' }}>
                         <Typography variant="h6">{name}</Typography>
                         <Typography variant="body1">{calculateTotalTime(recordings)}</Typography>
                         <RecordingsList {...{ recordings }}/>
                     </Grid>
-                    <Grid item>
-                        <RecordingButton {...{ task, startRecording, stopRecording }}/>
-                    </Grid>
+                    {!isManaging && (
+                        <Grid item>
+                            <RecordingButton {...{ task, startRecording, stopRecording }}/>
+                        </Grid>
+                    )} 
                 </Grid>
             </CardContent>
         </Card>
