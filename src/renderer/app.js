@@ -137,7 +137,6 @@ const TasksContainer = () => {
 
 export const App = () => (
     <div>
-        <Typography variant="h3">TimeKeeper</Typography>
         <TasksContainer/>
     </div>
 );

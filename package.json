@@ -1,7 +1,6 @@
 {
-  "name": "electron-webpack-quick-start",
+  "name": "@srapp/timekeeper",
   "version": "0.0.0",
-  "license": "MIT",
   "scripts": {
     "start": "electron-webpack dev",
     "compile": "electron-webpack",
