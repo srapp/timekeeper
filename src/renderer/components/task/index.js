@@ -8,7 +8,6 @@ import PlayArrowIcon from '@material-ui/icons/PlayArrow';
 import Typography from '@material-ui/core/Typography';
 import { format, formatDistanceStrict } from 'date-fns';
 
-const formatDate = (timestamp) => format(timestamp, 'M/d/yy')
 const formatTime = (timestamp) => format(timestamp, 'h:mmaaaaa');
 const calculateTotalTime = (recordings) => {
     const totalDuration = recordings.map(({start, end}) => (end || Date.now()) - start)
@@ -17,7 +16,23 @@ const calculateTotalTime = (recordings) => {
     return formatDistanceStrict(0, totalDuration, { unit: 'minute' })
 }
 
-export const Task = ({ task: { id, name, isRecording, recordings, createdAt }, startRecording, stopRecording }) => {
+const RecordingsList = ({ recordings }) => {
+    return <div>
+        <Typography variant="caption" style={{ color: '#bbb'}}>
+            {recordings.map(({start, end}) => `${formatTime(start)}-${end ? formatTime(end) : ''}`).join(', ')}
+        </Typography>
+    </div>
+}
+
+const RecordingButton = ({ task: { id, isRecording }, startRecording, stopRecording }) => {
+    const style = { fontSize: 36 };
+    const icon = isRecording ? <PauseIcon {...{ style }} color="secondary"/> : <PlayArrowIcon {...{ style }}/>;
+    const onClick = isRecording ? () => stopRecording(id) : () => startRecording(id)
+
+    return <IconButton {...{ onClick }}>{icon}</IconButton>
+}
+
+export const Task = ({ task, task: { name, isRecording, recordings, createdAt }, startRecording, stopRecording }) => {
     const [lastUpdated, setLastUpdated] = useState(Date.now());
 
     useEffect(() => {
@@ -28,22 +43,6 @@ export const Task = ({ task: { id, name, isRecording, recordings, createdAt }, s
         return () => clearInterval(interval);
     }, [isRecording]);
 
-    const RecordingButton = () => {
-        const style = { fontSize: 36 };
-        const icon = isRecording ? <PauseIcon {...{ style }} color="secondary"/> : <PlayArrowIcon {...{ style }}/>;
-        const onClick = isRecording ? () => stopRecording(id) : () => startRecording(id)
-
-        return <IconButton {...{ onClick }}>{icon}</IconButton>
-    }
-
-    const RecordingsList = () => {
-        return <div>
-            <Typography variant="caption" style={{ color: '#bbb'}}>
-                {recordings.map(({start, end}) => `${formatTime(start)}-${end ? formatTime(end) : ''}`).join(', ')}
-            </Typography>
-        </div>
-    }
-
     return (
         <Card variant="outlined" style={{ width: '100%' }}>
             <CardContent>
@@ -51,10 +50,10 @@ export const Task = ({ task: { id, name, isRecording, recordings, createdAt }, s
                     <Grid item>
                         <Typography variant="h6">{name}</Typography>
                         <Typography variant="body1">{calculateTotalTime(recordings)}</Typography>
-                        <RecordingsList/>
+                        <RecordingsList {...{ recordings }}/>
                     </Grid>
                     <Grid item>
-                        <RecordingButton/>
+                        <RecordingButton {...{ task, startRecording, stopRecording }}/>
                     </Grid>
                 </Grid>
             </CardContent>
